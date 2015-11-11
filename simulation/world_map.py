@@ -55,13 +55,13 @@ class WorldMap(object):
     def all_cells(self):
         return list(self.get_all_cells())
 
-    def get_score_cells(self):
+    def score_cells(self):
         return (c for c in self.get_all_cells() if c.generates_score)
 
-    def get_potential_spawn_locations(self):
+    def potential_spawn_locations(self):
         return (c for c in self.get_all_cells() if c.habitable and not c.generates_score and not c.avatar and not c.pickup)
 
-    def get_pickup_cells(self):
+    def pickup_cells(self):
         return (c for c in self.get_all_cells() if c.pickup)
 
     def is_on_map(self, location):
@@ -81,27 +81,27 @@ class WorldMap(object):
         self.add_pickups(num_avatars)
 
     def reset_score_locations(self, num_avatars):
-        for cell in self.get_score_cells():
+        for cell in self.score_cells():
             if random.random() < SCORE_DESPAWN_CHANCE:
                 cell.generates_score = False
 
-        new_num_score_locations = len(list(self.get_score_cells()))
+        new_num_score_locations = len(list(self.score_cells()))
         target_num_score_locations = int(math.ceil(num_avatars * TARGET_NUM_SCORE_LOCATIONS_PER_AVATAR))
         num_score_locations_to_add = target_num_score_locations - new_num_score_locations
         if num_score_locations_to_add > 0:
-            for cell in random.sample(list(self.get_potential_spawn_locations()), num_score_locations_to_add):
+            for cell in random.sample(list(self.potential_spawn_locations()), num_score_locations_to_add):
                 cell.generates_score = True
 
     def add_pickups(self, num_avatars):
         target_num_pickups = int(math.ceil(num_avatars * TARGET_NUM_PICKUPS_PER_AVATAR))
-        max_num_pickups_to_add = target_num_pickups - len(list(self.get_pickup_cells()))
+        max_num_pickups_to_add = target_num_pickups - len(list(self.pickup_cells()))
         if max_num_pickups_to_add > 0:
-            for cell in random.sample(list(self.get_potential_spawn_locations()), max_num_pickups_to_add):
+            for cell in random.sample(list(self.potential_spawn_locations()), max_num_pickups_to_add):
                 if random.random() < PICKUP_SPAWN_CHANCE:
                     cell.pickup = HealthPickup()
 
     def get_random_spawn_location(self):
-        return random.choice(list(self.get_potential_spawn_locations())).location
+        return random.choice(list(self.potential_spawn_locations())).location
 
     # TODO: cope with negative coords (here and possibly in other places)
     def can_move_to(self, target_location):

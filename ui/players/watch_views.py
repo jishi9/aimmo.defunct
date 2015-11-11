@@ -43,8 +43,8 @@ def get_world_state(request):
         player_data = {p.player_id: player_dict(p) for p in world.avatar_manager.avatarsById.values()}
         return JsonResponse({
             'players': player_data,
-            'score_locations': [(cell.location.x, cell.location.y) for cell in world.world_map.get_score_cells()],
-            'pickup_locations': [(cell.location.x, cell.location.y) for cell in world.world_map.get_pickup_cells()],
+            'score_locations': [(cell.location.x, cell.location.y) for cell in world.world_map.score_cells()],
+            'pickup_locations': [(cell.location.x, cell.location.y) for cell in world.world_map.pickup_cells()],
 
             'map_changed': True,  # TODO: experiment with only sending deltas (not if not required)
             'width': num_cols,
