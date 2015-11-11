@@ -48,21 +48,17 @@ class WorldMap(object):
     def __init__(self, grid):
         self.grid = grid
 
-    def get_all_cells(self):
+    def all_cells(self):
         return (cell for sublist in self.grid for cell in sublist)
 
-    @property
-    def all_cells(self):
-        return list(self.get_all_cells())
-
     def score_cells(self):
-        return (c for c in self.get_all_cells() if c.generates_score)
+        return (c for c in self.all_cells() if c.generates_score)
 
     def potential_spawn_locations(self):
-        return (c for c in self.get_all_cells() if c.habitable and not c.generates_score and not c.avatar and not c.pickup)
+        return (c for c in self.all_cells() if c.habitable and not c.generates_score and not c.avatar and not c.pickup)
 
     def pickup_cells(self):
-        return (c for c in self.get_all_cells() if c.pickup)
+        return (c for c in self.all_cells() if c.pickup)
 
     def is_on_map(self, location):
         num_cols = len(self.grid)

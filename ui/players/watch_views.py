@@ -38,7 +38,7 @@ def get_world_state(request):
         num_cols = len(world.world_map.grid)
         num_rows = len(world.world_map.grid[0])
         grid = [[None for x in xrange(num_cols)] for y in xrange(num_rows)]
-        for cell in world.world_map.all_cells:
+        for cell in world.world_map.all_cells():
             grid[cell.location.x][cell.location.y] = to_cell_type(cell)
         player_data = {p.player_id: player_dict(p) for p in world.avatar_manager.avatarsById.values()}
         return JsonResponse({
