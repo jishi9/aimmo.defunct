@@ -1,11 +1,9 @@
-import random
 import math
-
-from simulation.direction import Direction
-
-
+import random
 
 # TODO: extract to settings
+from simulation.location import Location
+
 TARGET_NUM_SCORE_LOCATIONS_PER_AVATAR = 0.5
 SCORE_DESPAWN_CHANCE = 0.02
 
@@ -40,6 +38,62 @@ class Cell(object):
         return self.location == other.location
 
 
+def _linearize_negatives(n):
+            if n < 0:
+                return -2 * n - 1
+            else:
+                return 2 * n
+
+
+class Grid(object):
+
+    def __init__(self, width, height):
+        """
+        A grid with stuff #TODO
+
+        :param width: odd and positive
+        :param height: odd and positive
+        """
+        self.width = width
+        self.height = height
+
+        assert width > 0
+        assert height > 0
+        assert width % 2 == 1
+        assert height % 2 == 1
+
+        self.min_x, self.max_x = (-width + 1) / 2, width/2 + 1
+        self.min_y, self.max_y = (-height + 1) / 2, height/2 + 1
+
+        self._grid = []
+        for row in self._alternating_plus_minus(self.max_y):
+            this_row = []
+            self._grid.append(this_row)
+            for col in self._alternating_plus_minus(self.max_x):
+                x, y = col, row
+                this_row.append(Cell(Location(x, y)))
+
+    def get_cell(self, location):
+        return self._get_cell(location.x, location.y)
+
+    def _get_cell(self, x, y):
+        assert self.contains_cell(Location(x, y))
+
+        return self._grid[_linearize_negatives(y)][_linearize_negatives(x)]
+
+    def contains_cell(self, location):
+        return (self.min_x <= location.x < self.max_x) and (self.min_y <= location.y < self.max_y)
+
+    def _alternating_plus_minus(self, exclusive_max):
+        if exclusive_max == 0:
+            return
+        yield 0
+
+        for i in xrange(1, exclusive_max):
+            yield -i
+            yield i
+
+
 class WorldMap(object):
     """
     The non-player world state.
@@ -61,16 +115,12 @@ class WorldMap(object):
         return (c for c in self.all_cells() if c.pickup)
 
     def is_on_map(self, location):
-        num_cols = len(self.grid)
-        num_rows = len(self.grid[0])
-        return (0 <= location.y < num_rows) and (0 <= location.x < num_cols)
+        return self.grid.contains_cell(location)
 
     def get_cell(self, location):
         if not self.is_on_map(location):
             return None
-        cell = self.grid[location.x][location.y]
-        assert cell.location == location, 'location lookup mismatch: arg={}, found={}'.format(location, cell.location)
-        return cell
+        return self.grid.get_cell(location)
 
     def reconstruct_interactive_state(self, num_avatars):
         self.reset_score_locations(num_avatars)

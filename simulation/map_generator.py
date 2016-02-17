@@ -4,25 +4,24 @@ from itertools import tee, izip
 
 from simulation.direction import ALL_DIRECTIONS
 from simulation.location import Location
-from simulation.world_map import Cell, WorldMap
+from simulation.world_map import WorldMap, Grid
 
 
 def generate_map(height, width, obstacle_ratio):
-    grid = [[Cell(Location(x, y)) for y in xrange(height)] for x in xrange(width)]
-    world_map = WorldMap(grid)
+    grid = Grid(width, height)
 
     # We designate one non-corner edge cell as empty, to ensure that the map can be expanded
     always_empty_edge_x, always_empty_edge_y = get_random_edge_index(height, width)
 
     for x, y in shuffled(_get_edge_coordinates(height, width)):
         if (x, y) != (always_empty_edge_x, always_empty_edge_y) and random.random() < obstacle_ratio:
-            cell = grid[x][y]
+            cell = grid.get_cell(Location(x, y))
             cell.habitable = False
             #   So long as all habitable neighbours can still reach each other, then the map cannot get bisected
-            if not _all_habitable_neighbours_can_reach_each_other(cell, world_map):
+            if not _all_habitable_neighbours_can_reach_each_other(cell, grid):
                 cell.habitable = True
 
-    return world_map
+    return WorldMap(grid)
 
 
 def _get_edge_coordinates(height, width):
@@ -44,14 +43,14 @@ def pairwise(iterable):
     return izip(a, b)
 
 
-def _all_habitable_neighbours_can_reach_each_other(cell, world_map):
-    neighbours = get_adjacent_habitable_cells(cell, world_map)
+def _all_habitable_neighbours_can_reach_each_other(cell, grid):
+    neighbours = get_adjacent_habitable_cells(cell, grid)
 
     assert len(neighbours) >= 1
-    return all(get_shortest_path_between(n1, n2, world_map) is not None for n1, n2 in pairwise(neighbours))
+    return all(get_shortest_path_between(n1, n2, grid) is not None for n1, n2 in pairwise(neighbours))
 
 
-def get_shortest_path_between(source_cell, destination_cell, world_map):
+def get_shortest_path_between(source_cell, destination_cell, grid):
 
     def manhattan_distance_to_destination_cell(this_branch):
         branch_tip_location = this_branch[-1].location
@@ -63,7 +62,7 @@ def get_shortest_path_between(source_cell, destination_cell, world_map):
     while branches:
         branch = branches.pop()
 
-        for cell in get_adjacent_habitable_cells(branch[-1], world_map):
+        for cell in get_adjacent_habitable_cells(branch[-1], grid):
             if cell in visited_cells:
                 continue
 
@@ -108,8 +107,8 @@ def get_random_edge_index(height, width, rng=random):
     raise ValueError('Should not be reachable')
 
 
-def get_adjacent_habitable_cells(cell, world_map):
-    return [c for c in (world_map.get_cell(cell.location + d) for d in ALL_DIRECTIONS) if c and c.habitable]
+def get_adjacent_habitable_cells(cell, grid):
+    return [c for c in (grid.get_cell(cell.location + d) for d in ALL_DIRECTIONS) if c and c.habitable]
 
 
 class PriorityQueue(object):
